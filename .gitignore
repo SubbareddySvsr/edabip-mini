@@ -1,7 +1,23 @@
 venv/
 __pycache__/
 *.pyc
+
 node_modules/
+dist/
+
 .env
+
 .vscode/
 .idea/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+
+# SSH private keys
+*.pem
