@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 
+const API_URL = "http://13.201.39.169:8000";
+
 function App() {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("http://65.0.173.174:8000/api/dashboard")
+    fetch(`${API_URL}/api/dashboard`)
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Failed to fetch dashboard data");
+          throw new Error(`Backend returned ${response.status}`);
         }
         return response.json();
       })
@@ -18,37 +20,40 @@ function App() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
-        setError(err.message);
+        console.error("Dashboard API error:", err);
+        setError("Failed to fetch");
         setLoading(false);
       });
   }, []);
 
-  if (loading) {
-    return (
-      <div>
-        <h1>EDABIP Dashboard</h1>
-        <p>Loading dashboard...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div>
-        <h1>EDABIP Dashboard</h1>
-        <p style={{ color: "red" }}>Error: {error}</p>
-      </div>
-    );
-  }
-
   return (
-    <div>
+    <div style={{ padding: "30px", fontFamily: "Arial, sans-serif" }}>
       <h1>EDABIP Dashboard</h1>
 
-      <pre>
-        {JSON.stringify(dashboard, null, 2)}
-      </pre>
+      {loading && <p>Loading dashboard...</p>}
+
+      {error && (
+        <p style={{ color: "red", fontWeight: "bold" }}>
+          Error: {error}
+        </p>
+      )}
+
+      {dashboard && (
+        <div>
+          <h2>Dashboard Data</h2>
+
+          <pre
+            style={{
+              background: "#f4f4f4",
+              padding: "20px",
+              borderRadius: "8px",
+              overflowX: "auto",
+            }}
+          >
+            {JSON.stringify(dashboard, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   );
 }
