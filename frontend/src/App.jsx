@@ -4,25 +4,24 @@ const API_URL = "http://43.205.212.208:8000";
 
 function App() {
   const [dashboard, setDashboard] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetch(`${API_URL}/api/dashboard`)
       .then((response) => {
         if (!response.ok) {
-          throw new Error("API request failed");
+          throw new Error("Backend API request failed");
         }
+
         return response.json();
       })
       .then((data) => {
         setDashboard(data);
-        setLoading(false);
+        setError("");
       })
-      .catch((error) => {
-        console.error("Dashboard API error:", error);
+      .catch((err) => {
+        console.error("Dashboard API Error:", err);
         setError("Failed to fetch");
-        setLoading(false);
       });
   }, []);
 
@@ -37,7 +36,7 @@ function App() {
     >
       <div
         style={{
-          maxWidth: "1000px",
+          maxWidth: "1100px",
           margin: "0 auto",
         }}
       >
@@ -60,37 +59,37 @@ function App() {
           Enterprise Data Analytics and Business Intelligence Platform
         </p>
 
-        {loading && (
-          <div
-            style={{
-              textAlign: "center",
-              fontSize: "20px",
-              padding: "40px",
-            }}
-          >
-            Loading dashboard...
-          </div>
-        )}
-
         {error && (
           <div
             style={{
+              backgroundColor: "#ffe5e5",
+              color: "#c62828",
+              padding: "15px",
+              borderRadius: "8px",
               textAlign: "center",
-              color: "red",
-              fontSize: "20px",
-              padding: "40px",
+              marginBottom: "20px",
             }}
           >
             Error: {error}
           </div>
         )}
 
-        {dashboard && !loading && !error && (
+        {!dashboard && !error && (
+          <p
+            style={{
+              textAlign: "center",
+            }}
+          >
+            Loading dashboard...
+          </p>
+        )}
+
+        {dashboard && (
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "20px",
+              gap: "25px",
             }}
           >
             <div
@@ -103,13 +102,14 @@ function App() {
               }}
             >
               <h2>Total Sales</h2>
+
               <p
                 style={{
                   fontSize: "32px",
                   fontWeight: "bold",
                 }}
               >
-                ₹{dashboard.total_sales.toLocaleString()}
+                ₹{dashboard.total_sales}
               </p>
             </div>
 
@@ -123,6 +123,7 @@ function App() {
               }}
             >
               <h2>Total Orders</h2>
+
               <p
                 style={{
                   fontSize: "32px",
@@ -143,6 +144,7 @@ function App() {
               }}
             >
               <h2>Active Users</h2>
+
               <p
                 style={{
                   fontSize: "32px",
