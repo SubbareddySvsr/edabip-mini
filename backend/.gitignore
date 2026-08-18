@@ -1,4 +1,4 @@
-.env
+﻿.env
 __pycache__/
 *.pyc
 
@@ -7,3 +7,4 @@ ecs-backend-secret-policy.json
 ecs-exec-policy.json
 ecs-task-trust-policy.json
 edabip-backend-taskdef-9.json
+jenkins-passrole-policy.json
