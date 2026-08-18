@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_URL = "http://43.205.212.208:8000";
+const API_URL = "";
 
 function App() {
   const [dashboard, setDashboard] = useState(null);
@@ -109,7 +109,7 @@ function App() {
                   fontWeight: "bold",
                 }}
               >
-                ₹{dashboard.total_sales}
+                &#8377;{dashboard.total_sales}
               </p>
             </div>
 
