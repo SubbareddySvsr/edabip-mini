@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.routes import auth, billing, stos, transactions, reports, users
+
 app = FastAPI(
     title="EDABIP Mini API",
     description="Mini Enterprise Data Analytics and Business Intelligence Platform",
@@ -42,3 +44,11 @@ def dashboard():
         "total_orders": 250,
         "active_users": 120
     }
+
+
+app.include_router(auth.router)
+app.include_router(billing.router)
+app.include_router(stos.router)
+app.include_router(transactions.router)
+app.include_router(reports.router)
+app.include_router(users.router)

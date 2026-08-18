@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+
+rds-secret-policy.json
+ecs-backend-secret-policy.json
+ecs-exec-policy.json
+ecs-task-trust-policy.json
+edabip-backend-taskdef-9.json
