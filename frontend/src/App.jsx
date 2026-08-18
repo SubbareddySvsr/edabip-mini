@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "http://edabip-alb-97943372.ap-south-1.elb.amazonaws.com";
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -286,10 +286,10 @@ function App() {
             title="Total Sales"
             value={
               dashboard
-                ? `₹${dashboard.total_sales}`
+                ? `â‚¹${dashboard.total_sales}`
                 : "Loading..."
             }
-            icon="₹"
+            icon="â‚¹"
           />
 
           <MetricCard
@@ -299,7 +299,7 @@ function App() {
                 ? dashboard.total_orders
                 : "Loading..."
             }
-            icon="🛒"
+            icon="ðŸ›’"
           />
 
           <MetricCard
@@ -309,13 +309,13 @@ function App() {
                 ? dashboard.active_users
                 : "Loading..."
             }
-            icon="👥"
+            icon="ðŸ‘¥"
           />
 
           <MetricCard
             title="Revenue"
-            value="₹1,25,000"
-            icon="📈"
+            value="â‚¹1,25,000"
+            icon="ðŸ“ˆ"
           />
         </div>
 
@@ -375,30 +375,30 @@ function App() {
             title="Total Billed"
             value={
               billing
-                ? `₹${billing.total_billed}`
+                ? `â‚¹${billing.total_billed}`
                 : "Loading..."
             }
-            icon="₹"
+            icon="â‚¹"
           />
 
           <MetricCard
             title="Paid Amount"
             value={
               billing
-                ? `₹${billing.paid_amount}`
+                ? `â‚¹${billing.paid_amount}`
                 : "Loading..."
             }
-            icon="✓"
+            icon="âœ“"
           />
 
           <MetricCard
             title="Pending Amount"
             value={
               billing
-                ? `₹${billing.pending_amount}`
+                ? `â‚¹${billing.pending_amount}`
                 : "Loading..."
             }
-            icon="⏳"
+            icon="â³"
           />
 
           <MetricCard
@@ -408,7 +408,7 @@ function App() {
                 ? billing.invoices.length
                 : "Loading..."
             }
-            icon="📄"
+            icon="ðŸ“„"
           />
         </div>
 
@@ -424,7 +424,7 @@ function App() {
               rows={billing.invoices.map((invoice) => [
                 invoice.invoice_id,
                 invoice.customer,
-                `₹${invoice.amount}`,
+                `â‚¹${invoice.amount}`,
                 invoice.status,
               ])}
             />
@@ -455,7 +455,7 @@ function App() {
                 ? stos.total_stos
                 : "Loading..."
             }
-            icon="📦"
+            icon="ðŸ“¦"
           />
 
           <MetricCard
@@ -465,7 +465,7 @@ function App() {
                 ? stos.active_stos
                 : "Loading..."
             }
-            icon="↗"
+            icon="â†—"
           />
 
           <MetricCard
@@ -475,7 +475,7 @@ function App() {
                 ? stos.completed_stos
                 : "Loading..."
             }
-            icon="✓"
+            icon="âœ“"
           />
         </div>
 
@@ -524,7 +524,7 @@ function App() {
                 ? transactions.total_transactions
                 : "Loading..."
             }
-            icon="↔"
+            icon="â†”"
           />
 
           <MetricCard
@@ -534,7 +534,7 @@ function App() {
                 ? transactions.successful_transactions
                 : "Loading..."
             }
-            icon="✓"
+            icon="âœ“"
           />
 
           <MetricCard
@@ -551,10 +551,10 @@ function App() {
             title="Transaction Value"
             value={
               transactions
-                ? `₹${transactions.total_transaction_value}`
+                ? `â‚¹${transactions.total_transaction_value}`
                 : "Loading..."
             }
-            icon="₹"
+            icon="â‚¹"
           />
         </div>
 
@@ -572,7 +572,7 @@ function App() {
                 transaction.transaction_id,
                 transaction.type,
                 transaction.customer,
-                `₹${transaction.amount}`,
+                `â‚¹${transaction.amount}`,
                 transaction.status,
               ])}
             />
@@ -600,10 +600,10 @@ function App() {
             title="Total Revenue"
             value={
               reports
-                ? `₹${reports.sales_report.total_sales}`
+                ? `â‚¹${reports.sales_report.total_sales}`
                 : "Loading..."
             }
-            icon="₹"
+            icon="â‚¹"
           />
 
           <MetricCard
@@ -613,7 +613,7 @@ function App() {
                 ? reports.orders_report.total_orders
                 : "Loading..."
             }
-            icon="🛒"
+            icon="ðŸ›’"
           />
 
           <MetricCard
@@ -623,7 +623,7 @@ function App() {
                 ? reports.user_report.active_users
                 : "Loading..."
             }
-            icon="👤"
+            icon="ðŸ‘¤"
           />
 
           <MetricCard
@@ -633,7 +633,7 @@ function App() {
                 ? reports.summary.sales_growth
                 : "Loading..."
             }
-            icon="📊"
+            icon="ðŸ“Š"
           />
         </div>
 
@@ -645,7 +645,7 @@ function App() {
                 rows={reports.sales_report.monthly_sales.map(
                   (item) => [
                     item.month,
-                    `₹${item.sales}`,
+                    `â‚¹${item.sales}`,
                   ]
                 )}
               />
@@ -711,7 +711,7 @@ function App() {
                 ? users.total_users
                 : "Loading..."
             }
-            icon="👥"
+            icon="ðŸ‘¥"
           />
 
           <MetricCard
@@ -721,7 +721,7 @@ function App() {
                 ? users.active_users
                 : "Loading..."
             }
-            icon="✓"
+            icon="âœ“"
           />
 
           <MetricCard
@@ -846,7 +846,7 @@ function App() {
     <div style={appContainer}>
       <aside style={sidebar}>
         <div style={logo}>
-          ◉ EDABIP
+          â—‰ EDABIP
         </div>
 
         {menuItems.map((item) => (
@@ -869,7 +869,7 @@ function App() {
           onClick={handleLogout}
           style={logoutButton}
         >
-          ⇥ Logout
+          â‡¥ Logout
         </button>
       </aside>
 
@@ -880,10 +880,10 @@ function App() {
           </div>
 
           <div style={profileArea}>
-            <span>🔔</span>
+            <span>ðŸ””</span>
 
             <div style={profileIcon}>
-              👤
+              ðŸ‘¤
             </div>
 
             <div>
@@ -1107,16 +1107,16 @@ function EmptyMessage({ message }) {
 
 function getIcon(item) {
   const icons = {
-    Dashboard: "⌂",
-    Billing: "▣",
-    "STO Management": "◈",
-    Transactions: "↔",
-    Reports: "▥",
-    Users: "♙",
-    Settings: "⚙",
+    Dashboard: "âŒ‚",
+    Billing: "â–£",
+    "STO Management": "â—ˆ",
+    Transactions: "â†”",
+    Reports: "â–¥",
+    Users: "â™™",
+    Settings: "âš™",
   };
 
-  return icons[item] || "•";
+  return icons[item] || "â€¢";
 }
 
 const loginPage = {
