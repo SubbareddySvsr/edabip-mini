@@ -1,0 +1,21 @@
+{
+  "family": "edabip-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::312920516006:role/EDABIP-ECS-Task-Execution-Role",
+  "containerDefinitions": [
+    {
+      "name": "backend",
+      "image": "312920516006.dkr.ecr.ap-south-1.amazonaws.com/edabip-backend:15",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  ]
+}
