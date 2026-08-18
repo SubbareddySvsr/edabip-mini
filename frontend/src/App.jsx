@@ -1,11 +1,20 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-const API_URL = "http://edabip-alb-97943372.ap-south-1.elb.amazonaws.com";
+const API_URL = "";
+
+const API_ENDPOINTS = {
+  login: "/api/auth/login",
+  dashboard: "/api/dashboard",
+  billing: "/api/billing",
+  stos: "/api/stos",
+  transactions: "/api/transactions",
+  reports: "/api/reports",
+  users: "/api/users",
+};
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [activePage, setActivePage] = useState("Dashboard");
-
   const [dashboard, setDashboard] = useState(null);
   const [billing, setBilling] = useState(null);
   const [stos, setStos] = useState(null);
@@ -30,76 +39,59 @@ function App() {
   ];
 
   useEffect(() => {
-    if (loggedIn) {
-      loadPageData(activePage);
-    }
+    if (!loggedIn) return;
+    loadPageData(activePage);
   }, [loggedIn, activePage]);
 
-  async function getJson(endpoint) {
+  const fetchJson = async (endpoint) => {
     const response = await fetch(`${API_URL}${endpoint}`);
 
-    const text = await response.text();
-
     if (!response.ok) {
-      throw new Error(
-        `API request failed: ${response.status} ${text}`
-      );
+      throw new Error(`API request failed: ${response.status}`);
     }
 
-    if (!text) {
-      return {};
-    }
+    return response.json();
+  };
 
-    try {
-      return JSON.parse(text);
-    } catch {
-      throw new Error("Backend returned invalid JSON.");
-    }
-  }
-
-  async function loadPageData(page) {
-    if (page === "Settings") {
-      return;
-    }
+  const loadPageData = async (page) => {
+    if (page === "Settings") return;
 
     setLoading(true);
     setPageError("");
 
     try {
-      if (page === "Dashboard") {
-        setDashboard(await getJson("/api/dashboard"));
-      }
-
-      if (page === "Billing") {
-        setBilling(await getJson("/api/billing"));
-      }
-
-      if (page === "STO Management") {
-        setStos(await getJson("/api/stos"));
-      }
-
-      if (page === "Transactions") {
-        setTransactions(await getJson("/api/transactions"));
-      }
-
-      if (page === "Reports") {
-        setReports(await getJson("/api/reports"));
-      }
-
-      if (page === "Users") {
-        setUsers(await getJson("/api/users"));
+      switch (page) {
+        case "Dashboard":
+          setDashboard(await fetchJson(API_ENDPOINTS.dashboard));
+          break;
+        case "Billing":
+          setBilling(await fetchJson(API_ENDPOINTS.billing));
+          break;
+        case "STO Management":
+          setStos(await fetchJson(API_ENDPOINTS.stos));
+          break;
+        case "Transactions":
+          setTransactions(await fetchJson(API_ENDPOINTS.transactions));
+          break;
+        case "Reports":
+          setReports(await fetchJson(API_ENDPOINTS.reports));
+          break;
+        case "Users":
+          setUsers(await fetchJson(API_ENDPOINTS.users));
+          break;
+        default:
+          break;
       }
     } catch (error) {
-      console.error(error);
-      setPageError(error.message);
+      console.error(`${page} API Error:`, error);
+      setPageError(`Unable to load ${page.toLowerCase()} data.`);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  async function handleLogin(event) {
+  const handleLogin = async (event) => {
     event.preventDefault();
-
     setLoginError("");
 
     if (!email || !password) {
@@ -110,7 +102,7 @@ function App() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch(`${API_URL}${API_ENDPOINTS.login}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -121,81 +113,115 @@ function App() {
         }),
       });
 
-      const text = await response.text();
-
-      let data = {};
-
-      if (text) {
-        try {
-          data = JSON.parse(text);
-        } catch {
-          throw new Error("Login API returned invalid JSON.");
-        }
-      }
+      const data = await response.json();
 
       if (!response.ok) {
-        let message = "Login failed.";
-
-        if (typeof data.detail === "string") {
-          message = data.detail;
-        } else if (Array.isArray(data.detail)) {
-          message = data.detail
-            .map((item) => item.msg)
-            .join(", ");
-        }
-
-        throw new Error(message);
+        throw new Error(data.detail || "Invalid email or password.");
       }
-
-      if (data.success === false) {
-        throw new Error(data.message || "Invalid email or password.");
-      }
-
-      console.log("Login successful:", data);
 
       setLoggedIn(true);
       setActivePage("Dashboard");
       setPassword("");
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Login API Error:", error);
       setLoginError(error.message || "Login failed.");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  function handleLogout() {
+  const handleLogout = () => {
     setLoggedIn(false);
-    setActivePage("Dashboard");
     setPassword("");
-  }
+    setActivePage("Dashboard");
+    setLoginError("");
+  };
 
   if (!loggedIn) {
     return (
-      <div style={loginPage}>
-        <div style={loginLeft}>
-          <h1 style={{ fontSize: "52px", margin: "0 0 15px" }}>
-            EDABIP
-          </h1>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          backgroundColor: "#f4f7ff",
+          fontFamily: "Arial, sans-serif",
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            background:
+              "linear-gradient(135deg, #06245c 0%, #0757d5 60%, #1f78ff 100%)",
+            color: "white",
+            padding: "70px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+          }}
+        >
+          <h1 style={{ fontSize: "52px", margin: "0 0 15px" }}>EDABIP</h1>
 
-          <h2 style={{ fontSize: "26px", fontWeight: "500" }}>
+          <h2
+            style={{
+              fontSize: "26px",
+              fontWeight: "500",
+              maxWidth: "520px",
+              lineHeight: "1.4",
+            }}
+          >
             Enterprise Data Analytics & Business Intelligence Platform
           </h2>
 
-          <p style={loginDescription}>
-            Manage business data, transactions, billing, analytics and
+          <p
+            style={{
+              fontSize: "17px",
+              lineHeight: "1.7",
+              maxWidth: "500px",
+              opacity: 0.9,
+              marginTop: "20px",
+            }}
+          >
+            Manage your business data, transactions, billing, analytics and
             operational activities from one centralized platform.
           </p>
 
-          <div style={featureContainer}>
-            <div style={featureBox}>Analytics</div>
-            <div style={featureBox}>Billing</div>
-            <div style={featureBox}>Operations</div>
+          <div
+            style={{
+              marginTop: "45px",
+              display: "flex",
+              gap: "15px",
+              flexWrap: "wrap",
+            }}
+          >
+            {["Analytics", "Billing", "Operations"].map((item) => (
+              <div
+                key={item}
+                style={{
+                  padding: "15px 20px",
+                  backgroundColor: "rgba(255,255,255,0.12)",
+                  borderRadius: "10px",
+                }}
+              >
+                {item}
+              </div>
+            ))}
           </div>
         </div>
 
-        <div style={loginRight}>
-          <form onSubmit={handleLogin} style={{ width: "100%", maxWidth: "360px" }}>
+        <div
+          style={{
+            width: "460px",
+            backgroundColor: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "40px",
+          }}
+        >
+          <form
+            onSubmit={handleLogin}
+            style={{ width: "100%", maxWidth: "360px" }}
+          >
             <h1 style={{ fontSize: "32px", marginBottom: "10px" }}>
               Welcome Back
             </h1>
@@ -204,28 +230,69 @@ function App() {
               Login to your EDABIP account
             </p>
 
-            <label style={labelStyle}>Email</label>
+            <label
+              style={{
+                display: "block",
+                fontWeight: "600",
+                marginBottom: "8px",
+              }}
+            >
+              Email
+            </label>
 
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
               placeholder="Enter your email"
-              style={inputStyle}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "14px",
+                border: "1px solid #d1d5db",
+                borderRadius: "8px",
+                marginBottom: "20px",
+                fontSize: "15px",
+              }}
             />
 
-            <label style={labelStyle}>Password</label>
+            <label
+              style={{
+                display: "block",
+                fontWeight: "600",
+                marginBottom: "8px",
+              }}
+            >
+              Password
+            </label>
 
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(event) => setPassword(event.target.value)}
               placeholder="Enter your password"
-              style={inputStyle}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "14px",
+                border: "1px solid #d1d5db",
+                borderRadius: "8px",
+                marginBottom: "15px",
+                fontSize: "15px",
+              }}
             />
 
             {loginError && (
-              <div style={errorBox}>
+              <div
+                style={{
+                  backgroundColor: "#fee2e2",
+                  color: "#b91c1c",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  marginBottom: "15px",
+                  fontSize: "14px",
+                }}
+              >
                 {loginError}
               </div>
             )}
@@ -234,6 +301,7 @@ function App() {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
+                alignItems: "center",
                 marginBottom: "25px",
                 fontSize: "14px",
               }}
@@ -242,7 +310,7 @@ function App() {
                 <input type="checkbox" /> Remember Me
               </label>
 
-              <span style={{ color: "#1261e8" }}>
+              <span style={{ color: "#1261e8", cursor: "pointer" }}>
                 Forgot Password?
               </span>
             </div>
@@ -250,7 +318,18 @@ function App() {
             <button
               type="submit"
               disabled={loading}
-              style={loginButton}
+              style={{
+                width: "100%",
+                padding: "14px",
+                border: "none",
+                borderRadius: "8px",
+                backgroundColor: "#1261e8",
+                color: "white",
+                fontSize: "16px",
+                fontWeight: "600",
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.7 : 1,
+              }}
             >
               {loading ? "Signing in..." : "Login"}
             </button>
@@ -260,6 +339,7 @@ function App() {
                 textAlign: "center",
                 marginTop: "25px",
                 color: "#6b7280",
+                fontSize: "14px",
               }}
             >
               Don't have an account? Contact Admin
@@ -270,583 +350,515 @@ function App() {
     );
   }
 
-  function renderDashboard() {
-    return (
-      <>
-        <PageHeader
-          title="Dashboard"
-          subtitle="Enterprise Data Analytics and Business Intelligence Platform"
+  const renderDashboard = () => (
+    <>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Enterprise Data Analytics and Business Intelligence Platform"
+      />
+
+      {loading && <LoadingMessage />}
+      {pageError && <ErrorMessage message={pageError} />}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: "20px",
+          marginBottom: "25px",
+        }}
+      >
+        <MetricCard
+          title="Total Sales"
+          value={dashboard ? `₹${dashboard.total_sales}` : "Loading..."}
+          icon="₹"
         />
-
-        {loading && <LoadingMessage />}
-        {pageError && <ErrorMessage message={pageError} />}
-
-        <div style={cardGrid}>
-          <MetricCard
-            title="Total Sales"
-            value={
-              dashboard
-                ? `â‚¹${dashboard.total_sales}`
-                : "Loading..."
-            }
-            icon="â‚¹"
-          />
-
-          <MetricCard
-            title="Total Orders"
-            value={
-              dashboard
-                ? dashboard.total_orders
-                : "Loading..."
-            }
-            icon="ðŸ›’"
-          />
-
-          <MetricCard
-            title="Active Users"
-            value={
-              dashboard
-                ? dashboard.active_users
-                : "Loading..."
-            }
-            icon="ðŸ‘¥"
-          />
-
-          <MetricCard
-            title="Revenue"
-            value="â‚¹1,25,000"
-            icon="ðŸ“ˆ"
-          />
-        </div>
-
-        <div style={twoColumnGrid}>
-          <Card title="Sales Overview">
-            <div
-              style={{
-                height: "250px",
-                display: "flex",
-                alignItems: "flex-end",
-                gap: "18px",
-                padding: "20px",
-              }}
-            >
-              {[45, 65, 50, 80, 62, 90, 72, 100, 82, 110, 95, 125].map(
-                (height, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      flex: 1,
-                      height: `${height * 1.5}px`,
-                      backgroundColor: "#1261e8",
-                      borderRadius: "6px 6px 0 0",
-                    }}
-                  />
-                )
-              )}
-            </div>
-          </Card>
-
-          <Card title="Order Status">
-            <div style={{ padding: "20px" }}>
-              <StatusRow label="Delivered" value="120" />
-              <StatusRow label="Processing" value="70" />
-              <StatusRow label="Pending" value="40" />
-              <StatusRow label="Cancelled" value="20" />
-            </div>
-          </Card>
-        </div>
-      </>
-    );
-  }
-
-  function renderBilling() {
-    return (
-      <>
-        <PageHeader
-          title="Billing"
-          subtitle="Manage invoices, payments and billing operations"
+        <MetricCard
+          title="Total Orders"
+          value={dashboard ? dashboard.total_orders : "Loading..."}
+          icon="🛒"
         />
-
-        {loading && <LoadingMessage />}
-        {pageError && <ErrorMessage message={pageError} />}
-
-        <div style={cardGrid}>
-          <MetricCard
-            title="Total Billed"
-            value={
-              billing
-                ? `â‚¹${billing.total_billed}`
-                : "Loading..."
-            }
-            icon="â‚¹"
-          />
-
-          <MetricCard
-            title="Paid Amount"
-            value={
-              billing
-                ? `â‚¹${billing.paid_amount}`
-                : "Loading..."
-            }
-            icon="âœ“"
-          />
-
-          <MetricCard
-            title="Pending Amount"
-            value={
-              billing
-                ? `â‚¹${billing.pending_amount}`
-                : "Loading..."
-            }
-            icon="â³"
-          />
-
-          <MetricCard
-            title="Invoices"
-            value={
-              billing
-                ? billing.invoices.length
-                : "Loading..."
-            }
-            icon="ðŸ“„"
-          />
-        </div>
-
-        <Card title="Invoice List">
-          {billing ? (
-            <Table
-              headers={[
-                "Invoice ID",
-                "Customer",
-                "Amount",
-                "Status",
-              ]}
-              rows={billing.invoices.map((invoice) => [
-                invoice.invoice_id,
-                invoice.customer,
-                `â‚¹${invoice.amount}`,
-                invoice.status,
-              ])}
-            />
-          ) : (
-            <EmptyMessage message="Loading billing data..." />
-          )}
-        </Card>
-      </>
-    );
-  }
-
-  function renderSTO() {
-    return (
-      <>
-        <PageHeader
-          title="STO Management"
-          subtitle="Manage Stock Transfer Orders"
+        <MetricCard
+          title="Active Users"
+          value={dashboard ? dashboard.active_users : "Loading..."}
+          icon="👥"
         />
+        <MetricCard title="Revenue" value="₹1,25,000" icon="📈" />
+      </div>
 
-        {loading && <LoadingMessage />}
-        {pageError && <ErrorMessage message={pageError} />}
-
-        <div style={threeColumnGrid}>
-          <MetricCard
-            title="Total STOs"
-            value={
-              stos
-                ? stos.total_stos
-                : "Loading..."
-            }
-            icon="ðŸ“¦"
-          />
-
-          <MetricCard
-            title="Active STOs"
-            value={
-              stos
-                ? stos.active_stos
-                : "Loading..."
-            }
-            icon="â†—"
-          />
-
-          <MetricCard
-            title="Completed STOs"
-            value={
-              stos
-                ? stos.completed_stos
-                : "Loading..."
-            }
-            icon="âœ“"
-          />
-        </div>
-
-        <Card title="STO List">
-          {stos ? (
-            <Table
-              headers={[
-                "STO ID",
-                "Source",
-                "Destination",
-                "Quantity",
-                "Status",
-              ]}
-              rows={stos.stos.map((sto) => [
-                sto.sto_id,
-                sto.source,
-                sto.destination,
-                sto.quantity,
-                sto.status,
-              ])}
-            />
-          ) : (
-            <EmptyMessage message="Loading STO data..." />
-          )}
-        </Card>
-      </>
-    );
-  }
-
-  function renderTransactions() {
-    return (
-      <>
-        <PageHeader
-          title="Transactions"
-          subtitle="View and manage business transactions"
-        />
-
-        {loading && <LoadingMessage />}
-        {pageError && <ErrorMessage message={pageError} />}
-
-        <div style={cardGrid}>
-          <MetricCard
-            title="Total Transactions"
-            value={
-              transactions
-                ? transactions.total_transactions
-                : "Loading..."
-            }
-            icon="â†”"
-          />
-
-          <MetricCard
-            title="Successful"
-            value={
-              transactions
-                ? transactions.successful_transactions
-                : "Loading..."
-            }
-            icon="âœ“"
-          />
-
-          <MetricCard
-            title="Failed"
-            value={
-              transactions
-                ? transactions.failed_transactions
-                : "Loading..."
-            }
-            icon="!"
-          />
-
-          <MetricCard
-            title="Transaction Value"
-            value={
-              transactions
-                ? `â‚¹${transactions.total_transaction_value}`
-                : "Loading..."
-            }
-            icon="â‚¹"
-          />
-        </div>
-
-        <Card title="Transaction History">
-          {transactions ? (
-            <Table
-              headers={[
-                "Transaction ID",
-                "Type",
-                "Customer",
-                "Amount",
-                "Status",
-              ]}
-              rows={transactions.transactions.map((transaction) => [
-                transaction.transaction_id,
-                transaction.type,
-                transaction.customer,
-                `â‚¹${transaction.amount}`,
-                transaction.status,
-              ])}
-            />
-          ) : (
-            <EmptyMessage message="Loading transaction data..." />
-          )}
-        </Card>
-      </>
-    );
-  }
-
-  function renderReports() {
-    return (
-      <>
-        <PageHeader
-          title="Reports & Analytics"
-          subtitle="Business performance and analytics"
-        />
-
-        {loading && <LoadingMessage />}
-        {pageError && <ErrorMessage message={pageError} />}
-
-        <div style={cardGrid}>
-          <MetricCard
-            title="Total Revenue"
-            value={
-              reports
-                ? `â‚¹${reports.sales_report.total_sales}`
-                : "Loading..."
-            }
-            icon="â‚¹"
-          />
-
-          <MetricCard
-            title="Total Orders"
-            value={
-              reports
-                ? reports.orders_report.total_orders
-                : "Loading..."
-            }
-            icon="ðŸ›’"
-          />
-
-          <MetricCard
-            title="Active Users"
-            value={
-              reports
-                ? reports.user_report.active_users
-                : "Loading..."
-            }
-            icon="ðŸ‘¤"
-          />
-
-          <MetricCard
-            title="Sales Growth"
-            value={
-              reports
-                ? reports.summary.sales_growth
-                : "Loading..."
-            }
-            icon="ðŸ“Š"
-          />
-        </div>
-
-        <div style={twoColumnGrid}>
-          <Card title="Monthly Sales">
-            {reports ? (
-              <Table
-                headers={["Month", "Sales"]}
-                rows={reports.sales_report.monthly_sales.map(
-                  (item) => [
-                    item.month,
-                    `â‚¹${item.sales}`,
-                  ]
-                )}
-              />
-            ) : (
-              <EmptyMessage message="Loading report data..." />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "2fr 1fr",
+          gap: "20px",
+        }}
+      >
+        <Card title="Sales Overview">
+          <div
+            style={{
+              height: "250px",
+              display: "flex",
+              alignItems: "flex-end",
+              gap: "18px",
+              padding: "20px",
+            }}
+          >
+            {[45, 65, 50, 80, 62, 90, 72, 100, 82, 110, 95, 125].map(
+              (height, index) => (
+                <div
+                  key={index}
+                  style={{
+                    flex: 1,
+                    height: `${height * 1.5}px`,
+                    backgroundColor: "#1261e8",
+                    borderRadius: "6px 6px 0 0",
+                    minWidth: "15px",
+                  }}
+                />
+              )
             )}
-          </Card>
+          </div>
+        </Card>
 
-          <Card title="Order Summary">
-            {reports ? (
-              <div style={{ padding: "20px" }}>
-                <StatusRow
-                  label="Completed"
-                  value={
-                    reports.orders_report.completed_orders
-                  }
-                />
+        <Card title="Order Status">
+          <div style={{ padding: "20px", lineHeight: "2.3" }}>
+            <StatusRow label="Delivered" value="120" />
+            <StatusRow label="Processing" value="70" />
+            <StatusRow label="Pending" value="40" />
+            <StatusRow label="Cancelled" value="20" />
+          </div>
+        </Card>
+      </div>
+    </>
+  );
 
-                <StatusRow
-                  label="Pending"
-                  value={
-                    reports.orders_report.pending_orders
-                  }
-                />
+  const renderBilling = () => (
+    <>
+      <PageHeader
+        title="Billing"
+        subtitle="Manage invoices, payments and billing operations"
+        button="Create Invoice"
+      />
 
-                <StatusRow
-                  label="Cancelled"
-                  value={
-                    reports.orders_report.cancelled_orders
-                  }
-                />
+      {loading && <LoadingMessage />}
+      {pageError && <ErrorMessage message={pageError} />}
 
-                <StatusRow
-                  label="Order Growth"
-                  value={reports.summary.order_growth}
-                />
-              </div>
-            ) : (
-              <EmptyMessage message="Loading report data..." />
-            )}
-          </Card>
-        </div>
-      </>
-    );
-  }
-
-  function renderUsers() {
-    return (
-      <>
-        <PageHeader
-          title="Users"
-          subtitle="Manage EDABIP users and access"
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: "20px",
+          marginBottom: "25px",
+        }}
+      >
+        <MetricCard
+          title="Total Billed"
+          value={billing ? `₹${billing.total_billed}` : "Loading..."}
+          icon="₹"
         />
+        <MetricCard
+          title="Paid Amount"
+          value={billing ? `₹${billing.paid_amount}` : "Loading..."}
+          icon="✓"
+        />
+        <MetricCard
+          title="Pending Amount"
+          value={billing ? `₹${billing.pending_amount}` : "Loading..."}
+          icon="⏳"
+        />
+        <MetricCard
+          title="Invoices"
+          value={billing ? billing.invoices.length : "Loading..."}
+          icon="📄"
+        />
+      </div>
 
-        {loading && <LoadingMessage />}
-        {pageError && <ErrorMessage message={pageError} />}
-
-        <div style={threeColumnGrid}>
-          <MetricCard
-            title="Total Users"
-            value={
-              users
-                ? users.total_users
-                : "Loading..."
-            }
-            icon="ðŸ‘¥"
+      <Card title="Invoice List">
+        {billing ? (
+          <Table
+            headers={["Invoice ID", "Customer", "Amount", "Status"]}
+            rows={billing.invoices.map((invoice) => [
+              invoice.invoice_id,
+              invoice.customer,
+              `₹${invoice.amount}`,
+              invoice.status,
+            ])}
           />
+        ) : (
+          <EmptyMessage message="Loading billing data..." />
+        )}
+      </Card>
+    </>
+  );
 
-          <MetricCard
-            title="Active Users"
-            value={
-              users
-                ? users.active_users
-                : "Loading..."
-            }
-            icon="âœ“"
+  const renderSTO = () => (
+    <>
+      <PageHeader
+        title="STO Management"
+        subtitle="Manage Stock Transfer Orders"
+        button="New STO"
+      />
+
+      {loading && <LoadingMessage />}
+      {pageError && <ErrorMessage message={pageError} />}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "20px",
+          marginBottom: "25px",
+        }}
+      >
+        <MetricCard
+          title="Total STOs"
+          value={stos ? stos.total_stos : "Loading..."}
+          icon="📦"
+        />
+        <MetricCard
+          title="Active STOs"
+          value={stos ? stos.active_stos : "Loading..."}
+          icon="↗"
+        />
+        <MetricCard
+          title="Completed STOs"
+          value={stos ? stos.completed_stos : "Loading..."}
+          icon="✓"
+        />
+      </div>
+
+      <Card title="STO List">
+        {stos ? (
+          <Table
+            headers={[
+              "STO ID",
+              "Source",
+              "Destination",
+              "Quantity",
+              "Status",
+            ]}
+            rows={stos.stos.map((sto) => [
+              sto.sto_id,
+              sto.source,
+              sto.destination,
+              sto.quantity,
+              sto.status,
+            ])}
           />
+        ) : (
+          <EmptyMessage message="Loading STO data..." />
+        )}
+      </Card>
+    </>
+  );
 
-          <MetricCard
-            title="Inactive Users"
-            value={
-              users
-                ? users.inactive_users
-                : "Loading..."
-            }
-            icon="!"
+  const renderTransactions = () => (
+    <>
+      <PageHeader
+        title="Transactions"
+        subtitle="View and manage business transactions"
+      />
+
+      {loading && <LoadingMessage />}
+      {pageError && <ErrorMessage message={pageError} />}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: "20px",
+          marginBottom: "25px",
+        }}
+      >
+        <MetricCard
+          title="Total Transactions"
+          value={transactions ? transactions.total_transactions : "Loading..."}
+          icon="↔"
+        />
+        <MetricCard
+          title="Successful"
+          value={
+            transactions ? transactions.successful_transactions : "Loading..."
+          }
+          icon="✓"
+        />
+        <MetricCard
+          title="Failed"
+          value={transactions ? transactions.failed_transactions : "Loading..."}
+          icon="!"
+        />
+        <MetricCard
+          title="Transaction Value"
+          value={
+            transactions
+              ? `₹${transactions.total_transaction_value}`
+              : "Loading..."
+          }
+          icon="₹"
+        />
+      </div>
+
+      <Card title="Transaction History">
+        {transactions ? (
+          <Table
+            headers={[
+              "Transaction ID",
+              "Type",
+              "Customer",
+              "Amount",
+              "Status",
+            ]}
+            rows={transactions.transactions.map((transaction) => [
+              transaction.transaction_id,
+              transaction.type,
+              transaction.customer,
+              `₹${transaction.amount}`,
+              transaction.status,
+            ])}
           />
-        </div>
+        ) : (
+          <EmptyMessage message="Loading transaction data..." />
+        )}
+      </Card>
+    </>
+  );
 
-        <Card title="User Management">
-          {users ? (
+  const renderReports = () => (
+    <>
+      <PageHeader
+        title="Reports & Analytics"
+        subtitle="Business performance and analytics"
+        button="Download Report"
+      />
+
+      {loading && <LoadingMessage />}
+      {pageError && <ErrorMessage message={pageError} />}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: "20px",
+          marginBottom: "25px",
+        }}
+      >
+        <MetricCard
+          title="Total Revenue"
+          value={reports ? `₹${reports.sales_report.total_sales}` : "Loading..."}
+          icon="₹"
+        />
+        <MetricCard
+          title="Total Orders"
+          value={reports ? reports.orders_report.total_orders : "Loading..."}
+          icon="🛒"
+        />
+        <MetricCard
+          title="Active Users"
+          value={reports ? reports.user_report.active_users : "Loading..."}
+          icon="👤"
+        />
+        <MetricCard
+          title="Sales Growth"
+          value={reports ? reports.summary.sales_growth : "Loading..."}
+          icon="📊"
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "20px",
+        }}
+      >
+        <Card title="Monthly Sales">
+          {reports ? (
             <Table
-              headers={[
-                "User ID",
-                "Name",
-                "Email",
-                "Role",
-                "Status",
-              ]}
-              rows={users.users.map((user) => [
-                user.user_id,
-                user.name,
-                user.email,
-                user.role,
-                user.status,
+              headers={["Month", "Sales"]}
+              rows={reports.sales_report.monthly_sales.map((item) => [
+                item.month,
+                `₹${item.sales}`,
               ])}
             />
           ) : (
-            <EmptyMessage message="Loading user data..." />
+            <EmptyMessage message="Loading report data..." />
           )}
         </Card>
-      </>
-    );
-  }
 
-  function renderSettings() {
-    return (
-      <>
-        <PageHeader
-          title="Profile & Settings"
-          subtitle="Manage your account settings"
+        <Card title="Order Summary">
+          {reports ? (
+            <div style={{ padding: "20px", lineHeight: "2.5" }}>
+              <StatusRow
+                label="Completed"
+                value={reports.orders_report.completed_orders}
+              />
+              <StatusRow
+                label="Pending"
+                value={reports.orders_report.pending_orders}
+              />
+              <StatusRow
+                label="Cancelled"
+                value={reports.orders_report.cancelled_orders}
+              />
+              <StatusRow
+                label="Order Growth"
+                value={reports.summary.order_growth}
+              />
+            </div>
+          ) : (
+            <EmptyMessage message="Loading report data..." />
+          )}
+        </Card>
+      </div>
+    </>
+  );
+
+  const renderUsers = () => (
+    <>
+      <PageHeader
+        title="Users"
+        subtitle="Manage EDABIP users and access"
+        button="Add User"
+      />
+
+      {loading && <LoadingMessage />}
+      {pageError && <ErrorMessage message={pageError} />}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "20px",
+          marginBottom: "25px",
+        }}
+      >
+        <MetricCard
+          title="Total Users"
+          value={users ? users.total_users : "Loading..."}
+          icon="👥"
         />
+        <MetricCard
+          title="Active Users"
+          value={users ? users.active_users : "Loading..."}
+          icon="✓"
+        />
+        <MetricCard
+          title="Inactive Users"
+          value={users ? users.inactive_users : "Loading..."}
+          icon="!"
+        />
+      </div>
 
-        <div style={twoColumnGrid}>
-          <Card title="Profile">
-            <div style={{ padding: "20px" }}>
-              <SettingField
-                label="Full Name"
-                value="Admin User"
-              />
+      <Card title="User Management">
+        {users ? (
+          <Table
+            headers={["User ID", "Name", "Email", "Role", "Status"]}
+            rows={users.users.map((user) => [
+              user.user_id,
+              user.name,
+              user.email,
+              user.role,
+              user.status,
+            ])}
+          />
+        ) : (
+          <EmptyMessage message="Loading user data..." />
+        )}
+      </Card>
+    </>
+  );
 
-              <SettingField
-                label="Email"
-                value={email}
-              />
+  const renderSettings = () => (
+    <>
+      <PageHeader
+        title="Profile & Settings"
+        subtitle="Manage your account and application settings"
+      />
 
-              <SettingField
-                label="Role"
-                value="Administrator"
-              />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "20px",
+        }}
+      >
+        <Card title="Profile">
+          <div style={{ padding: "20px" }}>
+            <SettingField label="Full Name" value="Admin User" />
+            <SettingField label="Email" value={email} />
+            <SettingField label="Role" value="Administrator" />
+            <SettingField label="Department" value="IT Operations" />
+          </div>
+        </Card>
 
-              <SettingField
-                label="Department"
-                value="IT Operations"
-              />
-            </div>
-          </Card>
+        <Card title="Account Summary">
+          <div style={{ padding: "20px", lineHeight: "2.5" }}>
+            <p>
+              <strong>Username:</strong> {email}
+            </p>
+            <p>
+              <strong>Account Type:</strong> Administrator
+            </p>
+            <p>
+              <strong>Status:</strong>{" "}
+              <span style={{ color: "#16a34a" }}>Active</span>
+            </p>
+          </div>
+        </Card>
+      </div>
+    </>
+  );
 
-          <Card title="Account Summary">
-            <div style={{ padding: "20px" }}>
-              <p>
-                <strong>Username:</strong> {email}
-              </p>
-
-              <p>
-                <strong>Account Type:</strong> Administrator
-              </p>
-
-              <p>
-                <strong>Status:</strong>{" "}
-                <span style={{ color: "#16a34a" }}>
-                  Active
-                </span>
-              </p>
-            </div>
-          </Card>
-        </div>
-      </>
-    );
-  }
-
-  function renderPage() {
+  const renderPage = () => {
     switch (activePage) {
       case "Billing":
         return renderBilling();
-
       case "STO Management":
         return renderSTO();
-
       case "Transactions":
         return renderTransactions();
-
       case "Reports":
         return renderReports();
-
       case "Users":
         return renderUsers();
-
       case "Settings":
         return renderSettings();
-
       default:
         return renderDashboard();
     }
-  }
+  };
 
   return (
-    <div style={appContainer}>
-      <aside style={sidebar}>
-        <div style={logo}>
-          â—‰ EDABIP
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#f5f7fb",
+        fontFamily: "Arial, sans-serif",
+        display: "flex",
+      }}
+    >
+      <aside
+        style={{
+          width: "235px",
+          minHeight: "100vh",
+          backgroundColor: "#071b42",
+          color: "white",
+          padding: "25px 15px",
+          boxSizing: "border-box",
+          position: "fixed",
+          left: 0,
+          top: 0,
+          bottom: 0,
+        }}
+      >
+        <div
+          style={{
+            fontSize: "25px",
+            fontWeight: "bold",
+            padding: "5px 15px 30px",
+          }}
+        >
+          ◉ EDABIP
         </div>
 
         {menuItems.map((item) => (
@@ -854,11 +866,17 @@ function App() {
             key={item}
             onClick={() => setActivePage(item)}
             style={{
-              ...menuButton,
+              width: "100%",
+              border: "none",
+              color: "white",
+              textAlign: "left",
+              padding: "13px 15px",
+              marginBottom: "7px",
+              borderRadius: "7px",
+              cursor: "pointer",
               backgroundColor:
-                activePage === item
-                  ? "#1261e8"
-                  : "transparent",
+                activePage === item ? "#1261e8" : "transparent",
+              fontSize: "14px",
             }}
           >
             {getIcon(item)} {item}
@@ -867,43 +885,86 @@ function App() {
 
         <button
           onClick={handleLogout}
-          style={logoutButton}
+          style={{
+            width: "100%",
+            border: "none",
+            color: "white",
+            textAlign: "left",
+            padding: "13px 15px",
+            marginTop: "15px",
+            borderRadius: "7px",
+            cursor: "pointer",
+            backgroundColor: "transparent",
+            fontSize: "14px",
+          }}
         >
-          â‡¥ Logout
+          ⇥ Logout
         </button>
       </aside>
 
-      <main style={mainContent}>
-        <header style={header}>
+      <main
+        style={{
+          marginLeft: "235px",
+          width: "calc(100% - 235px)",
+          minHeight: "100vh",
+        }}
+      >
+        <header
+          style={{
+            height: "70px",
+            backgroundColor: "white",
+            borderBottom: "1px solid #e5e7eb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 30px",
+            boxSizing: "border-box",
+          }}
+        >
           <div style={{ fontSize: "20px", fontWeight: "600" }}>
             {activePage}
           </div>
 
-          <div style={profileArea}>
-            <span>ðŸ””</span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "15px",
+            }}
+          >
+            <span>🔔</span>
 
-            <div style={profileIcon}>
-              ðŸ‘¤
+            <div
+              style={{
+                width: "38px",
+                height: "38px",
+                borderRadius: "50%",
+                backgroundColor: "#dbeafe",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              👤
             </div>
 
             <div>
               <div style={{ fontWeight: "600", fontSize: "14px" }}>
                 Admin User
               </div>
-
-              <div
-                style={{
-                  color: "#6b7280",
-                  fontSize: "12px",
-                }}
-              >
+              <div style={{ color: "#6b7280", fontSize: "12px" }}>
                 {email}
               </div>
             </div>
           </div>
         </header>
 
-        <section style={content}>
+        <section
+          style={{
+            padding: "30px",
+            boxSizing: "border-box",
+          }}
+        >
           {renderPage()}
         </section>
       </main>
@@ -911,28 +972,53 @@ function App() {
   );
 }
 
-function PageHeader({ title, subtitle }) {
+function PageHeader({ title, subtitle, button }) {
   return (
-    <div style={{ marginBottom: "25px" }}>
-      <h1 style={{ margin: 0, fontSize: "30px" }}>
-        {title}
-      </h1>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "25px",
+      }}
+    >
+      <div>
+        <h1 style={{ margin: 0, fontSize: "30px" }}>{title}</h1>
+        <p style={{ marginTop: "8px", color: "#6b7280" }}>{subtitle}</p>
+      </div>
 
-      <p
-        style={{
-          marginTop: "8px",
-          color: "#6b7280",
-        }}
-      >
-        {subtitle}
-      </p>
+      {button && (
+        <button
+          style={{
+            border: "none",
+            backgroundColor: "#1261e8",
+            color: "white",
+            padding: "12px 18px",
+            borderRadius: "7px",
+            fontWeight: "600",
+            cursor: "pointer",
+          }}
+        >
+          + {button}
+        </button>
+      )}
     </div>
   );
 }
 
 function MetricCard({ title, value, icon }) {
   return (
-    <div style={metricCard}>
+    <div
+      style={{
+        backgroundColor: "white",
+        borderRadius: "12px",
+        padding: "20px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
       <div>
         <div
           style={{
@@ -943,18 +1029,22 @@ function MetricCard({ title, value, icon }) {
         >
           {title}
         </div>
-
-        <div
-          style={{
-            fontSize: "25px",
-            fontWeight: "700",
-          }}
-        >
-          {value}
-        </div>
+        <div style={{ fontSize: "25px", fontWeight: "700" }}>{value}</div>
       </div>
 
-      <div style={metricIcon}>
+      <div
+        style={{
+          width: "45px",
+          height: "45px",
+          borderRadius: "10px",
+          backgroundColor: "#eaf2ff",
+          color: "#1261e8",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "20px",
+        }}
+      >
         {icon}
       </div>
     </div>
@@ -963,11 +1053,25 @@ function MetricCard({ title, value, icon }) {
 
 function Card({ title, children }) {
   return (
-    <div style={card}>
-      <div style={cardTitle}>
+    <div
+      style={{
+        backgroundColor: "white",
+        borderRadius: "12px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        overflow: "hidden",
+        marginBottom: "20px",
+      }}
+    >
+      <div
+        style={{
+          padding: "20px",
+          borderBottom: "1px solid #eef0f4",
+          fontWeight: "700",
+          fontSize: "17px",
+        }}
+      >
         {title}
       </div>
-
       {children}
     </div>
   );
@@ -976,18 +1080,20 @@ function Card({ title, children }) {
 function Table({ headers, rows }) {
   return (
     <div style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-        }}
-      >
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr>
             {headers.map((header) => (
               <th
                 key={header}
-                style={tableHeader}
+                style={{
+                  textAlign: "left",
+                  padding: "15px 20px",
+                  backgroundColor: "#f8fafc",
+                  color: "#64748b",
+                  fontSize: "13px",
+                  whiteSpace: "nowrap",
+                }}
               >
                 {header}
               </th>
@@ -1001,9 +1107,18 @@ function Table({ headers, rows }) {
               {row.map((cell, cellIndex) => (
                 <td
                   key={cellIndex}
-                  style={tableCell}
+                  style={{
+                    padding: "15px 20px",
+                    borderTop: "1px solid #eef0f4",
+                    fontSize: "14px",
+                    whiteSpace: "nowrap",
+                  }}
                 >
-                  {cell}
+                  {cellIndex === row.length - 1 ? (
+                    <StatusBadge value={cell} />
+                  ) : (
+                    cell
+                  )}
                 </td>
               ))}
             </tr>
@@ -1014,6 +1129,55 @@ function Table({ headers, rows }) {
   );
 }
 
+function StatusBadge({ value }) {
+  let backgroundColor = "#dcfce7";
+  let color = "#15803d";
+
+  if (
+    value === "Pending" ||
+    value === "Processing" ||
+    value === "Medium"
+  ) {
+    backgroundColor = "#fef3c7";
+    color = "#b45309";
+  }
+
+  if (
+    value === "Overdue" ||
+    value === "Cancelled" ||
+    value === "High" ||
+    value === "Failed"
+  ) {
+    backgroundColor = "#fee2e2";
+    color = "#b91c1c";
+  }
+
+  if (value === "Low") {
+    backgroundColor = "#dbeafe";
+    color = "#1d4ed8";
+  }
+
+  if (value === "Inactive") {
+    backgroundColor = "#e5e7eb";
+    color = "#4b5563";
+  }
+
+  return (
+    <span
+      style={{
+        backgroundColor,
+        color,
+        padding: "5px 10px",
+        borderRadius: "20px",
+        fontSize: "12px",
+        fontWeight: "600",
+      }}
+    >
+      {value}
+    </span>
+  );
+}
+
 function StatusRow({ label, value }) {
   return (
     <div
@@ -1021,7 +1185,7 @@ function StatusRow({ label, value }) {
         display: "flex",
         justifyContent: "space-between",
         borderBottom: "1px solid #eef0f4",
-        padding: "10px 0",
+        padding: "5px 0",
       }}
     >
       <span>{label}</span>
@@ -1093,275 +1257,21 @@ function ErrorMessage({ message }) {
 }
 
 function EmptyMessage({ message }) {
-  return (
-    <div
-      style={{
-        padding: "20px",
-        color: "#6b7280",
-      }}
-    >
-      {message}
-    </div>
-  );
+  return <div style={{ padding: "20px", color: "#6b7280" }}>{message}</div>;
 }
 
 function getIcon(item) {
   const icons = {
-    Dashboard: "âŒ‚",
-    Billing: "â–£",
-    "STO Management": "â—ˆ",
-    Transactions: "â†”",
-    Reports: "â–¥",
-    Users: "â™™",
-    Settings: "âš™",
+    Dashboard: "⌂",
+    Billing: "▣",
+    "STO Management": "◈",
+    Transactions: "↔",
+    Reports: "▥",
+    Users: "♙",
+    Settings: "⚙",
   };
 
-  return icons[item] || "â€¢";
+  return icons[item] || "•";
 }
-
-const loginPage = {
-  minHeight: "100vh",
-  display: "flex",
-  backgroundColor: "#f4f7ff",
-  fontFamily: "Arial, sans-serif",
-};
-
-const loginLeft = {
-  flex: 1,
-  background:
-    "linear-gradient(135deg, #06245c 0%, #0757d5 60%, #1f78ff 100%)",
-  color: "white",
-  padding: "70px",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-};
-
-const loginRight = {
-  width: "460px",
-  backgroundColor: "white",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "40px",
-};
-
-const loginDescription = {
-  fontSize: "17px",
-  lineHeight: "1.7",
-  maxWidth: "500px",
-  opacity: 0.9,
-};
-
-const featureContainer = {
-  marginTop: "40px",
-  display: "flex",
-  gap: "15px",
-};
-
-const featureBox = {
-  padding: "14px 20px",
-  backgroundColor: "rgba(255,255,255,0.12)",
-  borderRadius: "10px",
-};
-
-const labelStyle = {
-  display: "block",
-  fontWeight: "600",
-  marginBottom: "8px",
-};
-
-const inputStyle = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "14px",
-  border: "1px solid #d1d5db",
-  borderRadius: "8px",
-  marginBottom: "20px",
-  fontSize: "15px",
-};
-
-const loginButton = {
-  width: "100%",
-  padding: "14px",
-  border: "none",
-  borderRadius: "8px",
-  backgroundColor: "#1261e8",
-  color: "white",
-  fontSize: "16px",
-  fontWeight: "600",
-  cursor: "pointer",
-};
-
-const errorBox = {
-  backgroundColor: "#fee2e2",
-  color: "#b91c1c",
-  padding: "12px",
-  borderRadius: "8px",
-  marginBottom: "15px",
-  fontSize: "14px",
-};
-
-const appContainer = {
-  minHeight: "100vh",
-  backgroundColor: "#f5f7fb",
-  fontFamily: "Arial, sans-serif",
-  display: "flex",
-};
-
-const sidebar = {
-  width: "235px",
-  minHeight: "100vh",
-  backgroundColor: "#071b42",
-  color: "white",
-  padding: "25px 15px",
-  boxSizing: "border-box",
-  position: "fixed",
-  left: 0,
-  top: 0,
-  bottom: 0,
-};
-
-const logo = {
-  fontSize: "25px",
-  fontWeight: "bold",
-  padding: "5px 15px 30px",
-};
-
-const menuButton = {
-  width: "100%",
-  border: "none",
-  color: "white",
-  textAlign: "left",
-  padding: "13px 15px",
-  marginBottom: "7px",
-  borderRadius: "7px",
-  cursor: "pointer",
-  fontSize: "14px",
-};
-
-const logoutButton = {
-  width: "100%",
-  border: "none",
-  color: "white",
-  textAlign: "left",
-  padding: "13px 15px",
-  marginTop: "15px",
-  borderRadius: "7px",
-  cursor: "pointer",
-  backgroundColor: "transparent",
-  fontSize: "14px",
-};
-
-const mainContent = {
-  marginLeft: "235px",
-  width: "calc(100% - 235px)",
-  minHeight: "100vh",
-};
-
-const header = {
-  height: "70px",
-  backgroundColor: "white",
-  borderBottom: "1px solid #e5e7eb",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "0 30px",
-  boxSizing: "border-box",
-};
-
-const profileArea = {
-  display: "flex",
-  alignItems: "center",
-  gap: "15px",
-};
-
-const profileIcon = {
-  width: "38px",
-  height: "38px",
-  borderRadius: "50%",
-  backgroundColor: "#dbeafe",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const content = {
-  padding: "30px",
-  boxSizing: "border-box",
-};
-
-const cardGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(4, 1fr)",
-  gap: "20px",
-  marginBottom: "25px",
-};
-
-const threeColumnGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(3, 1fr)",
-  gap: "20px",
-  marginBottom: "25px",
-};
-
-const twoColumnGrid = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: "20px",
-};
-
-const metricCard = {
-  backgroundColor: "white",
-  borderRadius: "12px",
-  padding: "20px",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-};
-
-const metricIcon = {
-  width: "45px",
-  height: "45px",
-  borderRadius: "10px",
-  backgroundColor: "#eaf2ff",
-  color: "#1261e8",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "20px",
-};
-
-const card = {
-  backgroundColor: "white",
-  borderRadius: "12px",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-  overflow: "hidden",
-  marginBottom: "20px",
-};
-
-const cardTitle = {
-  padding: "20px",
-  borderBottom: "1px solid #eef0f4",
-  fontWeight: "700",
-  fontSize: "17px",
-};
-
-const tableHeader = {
-  textAlign: "left",
-  padding: "15px 20px",
-  backgroundColor: "#f8fafc",
-  color: "#64748b",
-  fontSize: "13px",
-  whiteSpace: "nowrap",
-};
-
-const tableCell = {
-  padding: "15px 20px",
-  borderTop: "1px solid #eef0f4",
-  fontSize: "14px",
-  whiteSpace: "nowrap",
-};
 
 export default App;
